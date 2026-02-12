@@ -15,7 +15,7 @@ const AdminGate: React.FC<AdminGateProps> = ({ onUnlock, onClose }) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === 'Admin123') {
+        if (password === "Didsown'sit26$") {
             onUnlock();
         } else {
             setError(true);

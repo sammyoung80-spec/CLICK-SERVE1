@@ -7,6 +7,13 @@ import AdminGate from './AdminGate';
 import LandingPage from './views/LandingPage';
 import LoginPage from './views/LoginPage';
 import AuthPage from './views/AuthPage';
+import BuyerDashboard from './views/BuyerDashboard';
+import SupplierDashboard from './views/SupplierDashboard';
+import AdminDashboard from './views/AdminDashboard';
+import AboutUs from './views/AboutUs';
+import ContactUs from './views/ContactUs';
+import ProfilePage from './views/ProfilePage';
+import SuppliersList from './views/SuppliersList';
 import { AppView, UserSession, City } from '@/types';
 import { supabase } from '@/lib/supabase';
 
@@ -18,37 +25,53 @@ const ClientBody: React.FC = () => {
 
     // Sync Supabase Auth
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session: supabaseSession } }) => {
-            if (supabaseSession?.user) {
-                // Map supabase user to our UserSession type based on metadata
-                const role = supabaseSession.user.user_metadata.role || 'buyer';
-                setSession({
-                    id: supabaseSession.user.id,
-                    email: supabaseSession.user.email || '',
-                    role: role as any,
-                    name: supabaseSession.user.user_metadata.business_name || 'User',
-                    city: 'Lagos'
-                });
-                setCurrentView(role === 'supplier' ? 'supplier' : role === 'buyer' ? 'buyer' : 'landing');
+        let mounted = true;
+
+        const initAuth = async () => {
+            try {
+                const { data: { session: supabaseSession } } = await supabase.auth.getSession();
+                if (mounted && supabaseSession?.user) {
+                    const role = supabaseSession.user.user_metadata.role || 'buyer';
+                    setSession({
+                        id: supabaseSession.user.id,
+                        email: supabaseSession.user.email || '',
+                        role: role as any,
+                        name: supabaseSession.user.user_metadata.business_name || 'User',
+                        city: 'Lagos'
+                    });
+                    setCurrentView(role === 'supplier' ? 'supplier' : role === 'buyer' ? 'buyer' : 'landing');
+                }
+            } catch (error: any) {
+                // Silently handle abort errors or log others
+                if (error.name !== 'AbortError') {
+                    console.error('Auth Init Error:', error);
+                }
             }
-        });
+        };
+
+        initAuth();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, supabaseSession) => {
-            if (supabaseSession?.user) {
-                const role = supabaseSession.user.user_metadata.role || 'buyer';
-                setSession({
-                    id: supabaseSession.user.id,
-                    email: supabaseSession.user.email || '',
-                    role: role as any,
-                    name: supabaseSession.user.user_metadata.business_name || 'User',
-                    city: 'Lagos'
-                });
-            } else {
-                setSession(null);
+            if (mounted) {
+                if (supabaseSession?.user) {
+                    const role = supabaseSession.user.user_metadata.role || 'buyer';
+                    setSession({
+                        id: supabaseSession.user.id,
+                        email: supabaseSession.user.email || '',
+                        role: role as any,
+                        name: supabaseSession.user.user_metadata.business_name || 'User',
+                        city: 'Lagos'
+                    });
+                } else {
+                    setSession(null);
+                }
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     const handleSetView = (view: AppView) => {
@@ -123,6 +146,7 @@ const ClientBody: React.FC = () => {
                     <LoginPage
                         onSuccess={(role) => role ? handleDemoLogin(role) : handleSetView('landing')} // In real auth, useEffect catches it
                         onSignUp={() => handleSetView('signup')}
+                        onHome={() => handleSetView('landing')}
                     />
                 )}
 
@@ -134,13 +158,13 @@ const ClientBody: React.FC = () => {
                 )}
 
                 {/* Placeholders for views not yet implemented fully in this turn */}
-                {currentView === 'buyer' && <div className="p-20 text-center">Buyer Dashboard (Loading...)</div>}
-                {currentView === 'supplier' && <div className="p-20 text-center">Supplier Dashboard (Loading...)</div>}
-                {currentView === 'admin' && <div className="p-20 text-center">Admin Dashboard (Loading...)</div>}
-                {currentView === 'about' && <div className="p-20 text-center">About Us (Loading...)</div>}
-                {currentView === 'contact' && <div className="p-20 text-center">Contact Us (Loading...)</div>}
-                {currentView === 'marketplace' && <div className="p-20 text-center">Marketplace (Loading...)</div>}
-                {currentView === 'profile' && <div className="p-20 text-center">Profile (Loading...)</div>}
+                {currentView === 'buyer' && <BuyerDashboard city={selectedCity} />}
+                {currentView === 'supplier' && <SupplierDashboard />}
+                {currentView === 'admin' && <AdminDashboard />}
+                {currentView === 'about' && <AboutUs />}
+                {currentView === 'contact' && <ContactUs />}
+                {currentView === 'profile' && <ProfilePage />}
+                {currentView === 'marketplace' && <SuppliersList />}
             </main>
 
             {/* Admin Gate Modal */}

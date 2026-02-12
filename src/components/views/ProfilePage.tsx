@@ -51,7 +51,7 @@ const ProfilePage: React.FC = () => {
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Representative Name</label>
                                 <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 p-4 rounded-sm">
                                     <User className="w-4 h-4 text-blue-900" />
-                                    <input type="text" value="Adewale Johnson" className="bg-transparent font-bold text-sm text-blue-900 outline-none w-full" />
+                                    <input type="text" value="Adewale Johnson" readOnly className="bg-transparent font-bold text-sm text-blue-900 outline-none w-full" />
                                 </div>
                             </div>
                         </div>

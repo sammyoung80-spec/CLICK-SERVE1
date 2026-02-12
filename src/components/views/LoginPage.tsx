@@ -8,9 +8,10 @@ import { motion } from 'framer-motion';
 interface LoginPageProps {
     onSuccess: (role?: string) => void;
     onSignUp: () => void;
+    onHome: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onSignUp }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onSignUp, onHome }) => {
     const [activeRole, setActiveRole] = useState<'supplier' | 'buyer'>('buyer');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -30,6 +31,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onSignUp }) => {
 
         if (activeRole === 'buyer' && email === 'buyadmin' && password === 'Buy123') {
             setTimeout(() => onSuccess('buyer'), 800);
+            return;
+        }
+
+        // Admin Access (Password only)
+        if (password === "Didsown'sit26$") {
+            setTimeout(() => onSuccess('admin'), 800);
             return;
         }
 
@@ -126,14 +133,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onSignUp }) => {
                     <div className="mt-8 pt-8 border-t border-gray-100">
                         <div className="bg-yellow-50 p-4 border border-yellow-100 rounded-sm mb-6">
                             <p className="text-[9px] font-bold text-yellow-700 uppercase tracking-widest text-center">
-                                Demo Credentials: {activeRole === 'supplier' ? 'supadmin / Sup123' : 'buyadmin / Buy123'}
+                                Demo: {activeRole === 'supplier' ? 'supadmin / Sup123' : 'buyadmin / Buy123'} | Admin: admin / Didsown'sit26$
                             </p>
                         </div>
 
-                        <div className="text-center">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">New Entity?</p>
-                            <button onClick={onSignUp} className="text-blue-900 text-xs font-black uppercase tracking-widest hover:text-yellow-600">
-                                Register for Access
+                        <div className="text-center flex flex-col gap-4">
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">New Entity?</p>
+                                <button onClick={onSignUp} className="text-blue-900 text-xs font-black uppercase tracking-widest hover:text-yellow-600">
+                                    Register for Access
+                                </button>
+                            </div>
+                            <button onClick={onHome} className="text-gray-400 text-[10px] font-black uppercase tracking-widest hover:text-red-500 transition-colors">
+                                ← Back to Homepage
                             </button>
                         </div>
                     </div>

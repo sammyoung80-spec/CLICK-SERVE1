@@ -54,8 +54,18 @@ const Footer: React.FC<FooterProps> = ({ setView }) => {
                 </div>
 
                 <div className="border-t border-blue-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">© 2024 SkyWhale Logistics Ltd. RC-199283.</p>
-                    <div className="flex gap-6">
+                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">
+                        © {new Date().getFullYear()} SkyWhale Click&Serve Logistics Ltd. RC-7254292.
+                    </p>
+                    <div className="flex items-center gap-6">
+                        <a
+                            href="https://www.didsystemsinc.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest hover:text-white transition-colors"
+                        >
+                            Designed by DIDS' SYSTEMS INC
+                        </a>
                         <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                             System Operational
