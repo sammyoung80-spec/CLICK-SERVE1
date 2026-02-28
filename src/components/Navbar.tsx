@@ -112,29 +112,39 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setView, user, onLogout })
                                 )}
                             </div>
                         ) : (
-                            <div className="flex items-center gap-4">
+                            <div className="relative">
                                 <button
-                                    onClick={() => handleNavClick('login')}
-                                    className="text-xs font-black text-blue-900 uppercase tracking-widest hover:text-yellow-500 transition-colors"
+                                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                                    className="flex items-center justify-center p-2 rounded-full border border-gray-200 text-blue-900 hover:bg-gray-50 transition-colors"
                                 >
-                                    Login
+                                    <User className="w-5 h-5" />
                                 </button>
-                                <button
-                                    onClick={() => handleNavClick('signup')}
-                                    className="bg-blue-900 text-white px-6 py-2.5 rounded-sm text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all hover:shadow-lg active:scale-95"
-                                >
-                                    Join Network
-                                </button>
+
+                                {isProfileDropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-sm shadow-xl border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-200">
+                                        <button
+                                            onClick={() => handleNavClick('login')}
+                                            className="w-full text-left px-4 py-3 text-xs font-bold text-gray-700 hover:bg-gray-50 hover:text-blue-900 uppercase tracking-wide"
+                                        >
+                                            Sign In
+                                        </button>
+                                        <button
+                                            onClick={() => handleNavClick('signup')}
+                                            className="w-full text-left px-4 py-3 text-xs font-bold text-gray-700 hover:bg-gray-50 hover:text-blue-900 uppercase tracking-wide"
+                                        >
+                                            Sign Up
+                                        </button>
+                                        <div className="border-t border-gray-50 my-1"></div>
+                                        <button
+                                            onClick={() => handleNavClick('admin')}
+                                            className="w-full text-left px-4 py-3 text-[10px] font-black text-red-600 hover:bg-red-50 uppercase tracking-widest flex items-center gap-2"
+                                        >
+                                            Admin Panel
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
-
-                        {/* Admin Link (Hidden/Subtle) */}
-                        <button
-                            onClick={() => handleNavClick('admin')}
-                            className={`text-[8px] uppercase tracking-widest font-black ${currentView === 'admin' ? 'text-red-500' : 'text-gray-200 hover:text-gray-400'}`}
-                        >
-                            Admin
-                        </button>
                     </div>
 
                     {/* Mobile menu button */}
@@ -181,9 +191,10 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setView, user, onLogout })
                                     <button onClick={onLogout} className="w-full text-left px-3 py-3 text-xs font-bold text-red-600 hover:bg-red-50 rounded-sm uppercase tracking-widest">Sign Out</button>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={() => handleNavClick('login')} className="w-full py-4 text-xs font-black text-blue-900 border border-blue-900 rounded-sm uppercase tracking-widest text-center">Login</button>
-                                    <button onClick={() => handleNavClick('signup')} className="w-full py-4 text-xs font-black text-white bg-blue-900 rounded-sm uppercase tracking-widest text-center">Sign Up</button>
+                                <div className="flex flex-col gap-3">
+                                    <button onClick={() => handleNavClick('login')} className="w-full py-3 text-xs font-black text-blue-900 border border-blue-900 rounded-sm uppercase tracking-widest text-center">Sign In</button>
+                                    <button onClick={() => handleNavClick('signup')} className="w-full py-3 text-xs font-black text-white bg-blue-900 rounded-sm uppercase tracking-widest text-center">Sign Up</button>
+                                    <button onClick={() => handleNavClick('admin')} className="w-full py-3 text-xs font-black text-red-600 border border-red-600 rounded-sm uppercase tracking-widest text-center">Admin Panel</button>
                                 </div>
                             )}
                         </div>

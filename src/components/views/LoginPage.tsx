@@ -34,8 +34,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSuccess, onSignUp, onHome }) =>
             return;
         }
 
-        // Admin Access (Password only)
-        if (password === "Didsown'sit26$") {
+        // Admin Access
+        if (email === 'admin' && password === "Didsown'sit26$") {
             setTimeout(() => onSuccess('admin'), 800);
             return;
         }

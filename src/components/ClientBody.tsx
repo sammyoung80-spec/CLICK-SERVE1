@@ -1,21 +1,35 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import AdminGate from './AdminGate';
-import LandingPage from './views/LandingPage';
-import LoginPage from './views/LoginPage';
-import AuthPage from './views/AuthPage';
-import BuyerDashboard from './views/BuyerDashboard';
-import SupplierDashboard from './views/SupplierDashboard';
-import AdminDashboard from './views/AdminDashboard';
-import AboutUs from './views/AboutUs';
-import ContactUs from './views/ContactUs';
-import ProfilePage from './views/ProfilePage';
-import SuppliersList from './views/SuppliersList';
 import { AppView, UserSession, City } from '@/types';
 import { supabase } from '@/lib/supabase';
+
+// Eagerly loaded (above the fold)
+import LandingPage from './views/LandingPage';
+
+// Lazy loaded — only fetched when user navigates to these views
+const LoginPage = lazy(() => import('./views/LoginPage'));
+const AuthPage = lazy(() => import('./views/AuthPage'));
+const BuyerDashboard = lazy(() => import('./views/BuyerDashboard'));
+const SupplierDashboard = lazy(() => import('./views/SupplierDashboard'));
+const AdminDashboard = lazy(() => import('./views/AdminDashboard'));
+const AdminGate = lazy(() => import('./AdminGate'));
+const AboutUs = lazy(() => import('./views/AboutUs'));
+const ContactUs = lazy(() => import('./views/ContactUs'));
+const ProfilePage = lazy(() => import('./views/ProfilePage'));
+const SuppliersList = lazy(() => import('./views/SuppliersList'));
+
+// Reusable loading fallback
+const ViewLoader = () => (
+    <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest animate-pulse">Loading Module...</p>
+        </div>
+    </div>
+);
 
 const ClientBody: React.FC = () => {
     const [currentView, setCurrentView] = useState<AppView>('landing');
@@ -74,7 +88,7 @@ const ClientBody: React.FC = () => {
         };
     }, []);
 
-    const handleSetView = (view: AppView) => {
+    const handleSetView = useCallback((view: AppView) => {
         if (view === 'admin') {
             if (session?.role && session.role.startsWith('admin')) {
                 setCurrentView('admin');
@@ -85,12 +99,11 @@ const ClientBody: React.FC = () => {
         }
         setCurrentView(view);
         window.scrollTo(0, 0);
-    };
+    }, [session]);
 
-    const handleAdminUnlock = () => {
+    const handleAdminUnlock = useCallback(() => {
         setShowAdminGate(false);
         setCurrentView('admin');
-        // In a real app, elevate session here
         if (!session) {
             setSession({
                 id: 'admin',
@@ -99,16 +112,15 @@ const ClientBody: React.FC = () => {
                 name: 'System Administrator'
             });
         }
-    };
+    }, [session]);
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         await supabase.auth.signOut();
         setSession(null);
         setCurrentView('landing');
-    };
+    }, []);
 
-    const handleDemoLogin = (role: string = 'buyer') => {
-        // Mock login for demo
+    const handleDemoLogin = useCallback((role: string = 'buyer') => {
         const mockSession: UserSession = {
             id: role === 'buyer' ? 'BUY-DEMO' : 'SUP-DEMO',
             email: role === 'buyer' ? 'buyadmin@clickserve.ng' : 'supadmin@clickserve.ng',
@@ -118,7 +130,7 @@ const ClientBody: React.FC = () => {
         };
         setSession(mockSession);
         setCurrentView(role as any);
-    };
+    }, []);
 
     return (
         <>
@@ -142,38 +154,41 @@ const ClientBody: React.FC = () => {
                     />
                 )}
 
-                {currentView === 'login' && (
-                    <LoginPage
-                        onSuccess={(role) => role ? handleDemoLogin(role) : handleSetView('landing')} // In real auth, useEffect catches it
-                        onSignUp={() => handleSetView('signup')}
-                        onHome={() => handleSetView('landing')}
-                    />
-                )}
+                <Suspense fallback={<ViewLoader />}>
+                    {currentView === 'login' && (
+                        <LoginPage
+                            onSuccess={(role) => role ? handleDemoLogin(role) : handleSetView('landing')}
+                            onSignUp={() => handleSetView('signup')}
+                            onHome={() => handleSetView('landing')}
+                        />
+                    )}
 
-                {currentView === 'signup' && (
-                    <AuthPage
-                        onSuccess={() => handleSetView('login')}
-                        onCancel={() => handleSetView('landing')}
-                    />
-                )}
+                    {currentView === 'signup' && (
+                        <AuthPage
+                            onSuccess={() => handleSetView('login')}
+                            onCancel={() => handleSetView('landing')}
+                        />
+                    )}
 
-                {/* Placeholders for views not yet implemented fully in this turn */}
-                {currentView === 'buyer' && <BuyerDashboard city={selectedCity} />}
-                {currentView === 'supplier' && <SupplierDashboard />}
-                {currentView === 'admin' && <AdminDashboard />}
-                {currentView === 'about' && <AboutUs />}
-                {currentView === 'contact' && <ContactUs />}
-                {currentView === 'profile' && <ProfilePage />}
-                {currentView === 'marketplace' && <SuppliersList />}
+                    {currentView === 'buyer' && <BuyerDashboard city={selectedCity} />}
+                    {currentView === 'supplier' && <SupplierDashboard />}
+                    {currentView === 'admin' && <AdminDashboard />}
+                    {currentView === 'about' && <AboutUs />}
+                    {currentView === 'contact' && <ContactUs />}
+                    {currentView === 'profile' && <ProfilePage />}
+                    {currentView === 'marketplace' && <SuppliersList onLoginClick={() => handleSetView('login')} />}
+                </Suspense>
             </main>
 
             {/* Admin Gate Modal */}
-            {showAdminGate && (
-                <AdminGate
-                    onUnlock={handleAdminUnlock}
-                    onClose={() => setShowAdminGate(false)}
-                />
-            )}
+            <Suspense fallback={null}>
+                {showAdminGate && (
+                    <AdminGate
+                        onUnlock={handleAdminUnlock}
+                        onClose={() => setShowAdminGate(false)}
+                    />
+                )}
+            </Suspense>
 
             {currentView !== 'login' && currentView !== 'signup' && currentView !== 'buyer' && currentView !== 'supplier' && currentView !== 'admin' && (
                 <Footer setView={handleSetView} />

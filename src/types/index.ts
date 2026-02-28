@@ -24,6 +24,7 @@ export interface CityData {
 
 export interface Supplier {
   id: string;
+  profile_id?: string;
   name: string;
   city: City;
   pricePerLiter: number;
@@ -42,12 +43,15 @@ export interface Supplier {
 export interface Order {
   id: string;
   buyerName: string;
+  buyer_id?: string;
+  supplier_id?: string;
   liters: number;
   distanceKm: number;
   totalCost: number;
   status: 'Pending' | 'In Transit' | 'Delivered' | 'Paid';
   paymentMethod: 'Pay Now' | 'Credit';
   timestamp: string;
+  created_at?: string;
   priority: 'High' | 'Normal' | 'Low';
   truckLocation?: LatLng;
   isDiscounted?: boolean;

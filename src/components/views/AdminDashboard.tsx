@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MOCK_SUPPLIERS, MOCK_BUYERS, MOCK_ORDERS, CITY_METRICS } from '@/lib/constants';
+import { MOCK_SUPPLIERS, MOCK_BUYERS, MOCK_ORDERS, SYSTEM_LOGS, CITY_METRICS } from '@/lib/constants';
 import { Supplier } from '@/types';
-import { ShieldCheck, Users, Truck, AlertTriangle, FileText, LayoutGrid, Map as MapIcon, Settings, Search, MoreVertical, X } from 'lucide-react';
+import { ShieldCheck, Users, Truck, AlertTriangle, FileText, LayoutGrid, Map as MapIcon, Settings, Search, MoreVertical, X, CheckCircle2, Clock, Activity, Terminal, Database, Shield } from 'lucide-react';
+import { formatCurrency } from '@/utils/pricing';
 
 const AdminDashboard: React.FC = () => {
     const [activeMenu, setActiveMenu] = useState('suppliers');
     const [suppliers, setSuppliers] = useState(MOCK_SUPPLIERS);
+    const [buyers, setBuyers] = useState(MOCK_BUYERS);
+    const [orders, setOrders] = useState(MOCK_ORDERS);
 
-    const toggleStatus = (id: string) => {
+    const toggleSupplierStatus = (id: string) => {
         setSuppliers(prev => prev.map(s => {
             if (s.id === id) {
                 return {
@@ -22,111 +25,165 @@ const AdminDashboard: React.FC = () => {
         }));
     };
 
+    const toggleBuyerStatus = (id: string) => {
+        setBuyers(prev => prev.map(b => b.id === id ? { ...b, status: b.status === 'Active' ? 'Suspended' : 'Active' } : b));
+    };
+
     const menuItems = [
         { id: 'suppliers', label: 'Suppliers', icon: <Truck className="w-4 h-4" /> },
         { id: 'buyers', label: 'Buyers', icon: <Users className="w-4 h-4" /> },
-        { id: 'orders', label: 'Dispatch', icon: <FileText className="w-4 h-4" /> },
+        { id: 'dispatch', label: 'Dispatch', icon: <FileText className="w-4 h-4" /> },
         { id: 'map', label: 'Live Map', icon: <MapIcon className="w-4 h-4" /> },
-        { id: 'settings', label: 'System', icon: <Settings className="w-4 h-4" /> },
+        { id: 'system', label: 'System', icon: <Settings className="w-4 h-4" /> },
     ];
 
     return (
-        <div className="flex h-[calc(100vh-80px)] font-sans bg-[#0b1120] text-gray-300">
+        <div className="flex h-[calc(100vh-80px)] font-sans bg-[#050505] text-gray-300 overflow-hidden">
             {/* Sidebar */}
-            <div className="w-64 border-r border-blue-900/50 bg-[#0b1120] flex flex-col">
-                <div className="p-6 border-b border-blue-900/50">
+            <div className="w-64 border-r border-gray-800/50 bg-[#0a0a0a] flex flex-col relative z-20">
+                <div className="p-6 border-b border-gray-800/50 bg-black/50">
                     <h2 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
-                        <LayoutGrid className="w-4 h-4 text-red-500" /> Command Center
+                        <LayoutGrid className="w-4 h-4 text-blue-500" /> Command Center
                     </h2>
-                    <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mt-1">Admin Access Level 5</p>
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Admin Access Level 5</p>
+                    </div>
                 </div>
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className="flex-1 p-4 space-y-1">
                     {menuItems.map(item => (
                         <button
                             key={item.id}
                             onClick={() => setActiveMenu(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm text-xs font-bold uppercase tracking-widest transition-all ${activeMenu === item.id ? 'bg-blue-900/30 text-white border-l-2 border-red-500' : 'hover:bg-blue-900/10 hover:text-white'}`}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all ${activeMenu === item.id
+                                    ? 'bg-blue-900/20 text-blue-400 border-l-2 border-blue-500 shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]'
+                                    : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
+                                }`}
                         >
                             {item.icon}
                             {item.label}
                         </button>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-blue-900/50">
-                    <div className="bg-red-900/10 p-4 rounded-sm border border-red-900/20">
-                        <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                <div className="p-4 border-t border-gray-800/50 bg-black/50">
+                    <div className="bg-yellow-900/10 p-4 rounded-sm border border-yellow-900/20 backdrop-blur-sm relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-yellow-500"></div>
+                        <p className="text-[9px] font-black text-yellow-500 uppercase tracking-widest mb-2 flex items-center gap-2">
                             <AlertTriangle className="w-3 h-3" /> System Alert
                         </p>
-                        <p className="text-[9px] leading-relaxed">
-                            3 New Suppler verification requests pending audit in Kano region.
+                        <p className="text-[9px] text-gray-400 leading-relaxed font-bold">
+                            3 New Supplier verification requests pending audit in Kano region.
                         </p>
                     </div>
                 </div>
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-auto bg-[url('/grid-bg.png')]">
-                <header className="px-8 py-6 border-b border-blue-900/50 flex justify-between items-center bg-[#0b1120]/95 backdrop-blur-sm sticky top-0 z-20">
-                    <h1 className="text-xl font-black text-white uppercase tracking-tighter">{activeMenu} Overview</h1>
-                    <div className="flex items-center gap-4">
+            <div className="flex-1 overflow-auto relative">
+                {/* Background FX */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+                <header className="px-8 py-5 border-b border-gray-800/50 flex justify-between items-center bg-[#0a0a0a]/80 backdrop-blur-xl sticky top-0 z-20">
+                    <h1 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-3">
+                        {activeMenu} Overview
+                        <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[8px] border border-blue-500/20">LIVE</span>
+                    </h1>
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4 border-r border-gray-800 pr-6">
+                            <div className="text-right">
+                                <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Network Status</p>
+                                <p className="text-xs font-bold text-green-400">Optimal (99.9%)</p>
+                            </div>
+                            <Activity className="w-5 h-5 text-green-500/50" />
+                        </div>
                         <div className="relative">
                             <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input type="text" placeholder="Search Node..." className="bg-black/20 border border-blue-900/50 pl-10 pr-4 py-2 rounded-sm text-xs font-bold focus:outline-none focus:border-blue-500 w-64 uppercase placeholder:text-gray-600" />
+                            <input
+                                type="text"
+                                placeholder="Search UUID or Name..."
+                                className="bg-black/50 border border-gray-800 pl-10 pr-4 py-2 rounded-sm text-[10px] font-bold text-white focus:outline-none focus:border-blue-500 w-64 uppercase tracking-widest placeholder:text-gray-600 transition-colors"
+                            />
                         </div>
                     </div>
                 </header>
 
-                <div className="p-8">
+                <div className="p-8 relative z-10">
                     {activeMenu === 'suppliers' && (
-                        <div className="space-y-6">
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* Metrics */}
                             <div className="grid grid-cols-4 gap-6">
-                                <div className="bg-blue-900/10 border border-blue-900/30 p-6 rounded-sm">
-                                    <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Total Nodes</p>
-                                    <p className="text-3xl font-black text-white mt-2">{suppliers.length}</p>
+                                <div className="bg-[#0a0a0a] border border-gray-800 p-6 rounded-sm relative overflow-hidden group hover:border-blue-900/50 transition-colors">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity"><Truck className="w-16 h-16 text-blue-500" /></div>
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest relative z-10">Total Terminal Nodes</p>
+                                    <p className="text-4xl font-black text-white mt-2 tracking-tighter relative z-10">{suppliers.length}</p>
                                 </div>
-                                <div className="bg-green-900/10 border border-green-900/30 p-6 rounded-sm">
-                                    <p className="text-[9px] font-black text-green-400 uppercase tracking-widest">Verified</p>
-                                    <p className="text-3xl font-black text-white mt-2">{suppliers.filter(s => s.isVerified).length}</p>
+                                <div className="bg-[#0a0a0a] border border-gray-800 p-6 rounded-sm relative overflow-hidden group hover:border-green-900/50 transition-colors">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity"><ShieldCheck className="w-16 h-16 text-green-500" /></div>
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest relative z-10">Verified / Active</p>
+                                    <p className="text-4xl font-black text-green-400 mt-2 tracking-tighter relative z-10">{suppliers.filter(s => s.isVerified).length}</p>
                                 </div>
-                                <div className="bg-red-900/10 border border-red-900/30 p-6 rounded-sm">
-                                    <p className="text-[9px] font-black text-red-400 uppercase tracking-widest">Pending Audit</p>
-                                    <p className="text-3xl font-black text-white mt-2">{suppliers.filter(s => !s.isVerified).length}</p>
+                                <div className="bg-[#0a0a0a] border border-gray-800 p-6 rounded-sm relative overflow-hidden group hover:border-red-900/50 transition-colors">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity"><AlertTriangle className="w-16 h-16 text-red-500" /></div>
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest relative z-10">Pending Audit</p>
+                                    <p className="text-4xl font-black text-red-400 mt-2 tracking-tighter relative z-10">{suppliers.filter(s => !s.isVerified).length}</p>
+                                </div>
+                                <div className="bg-[#0a0a0a] border border-gray-800 p-6 rounded-sm relative overflow-hidden group hover:border-yellow-900/50 transition-colors">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity"><Database className="w-16 h-16 text-yellow-500" /></div>
+                                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest relative z-10">Network Liquidity</p>
+                                    <p className="text-3xl font-black text-yellow-500 mt-2 tracking-tighter relative z-10">{Math.floor(suppliers.reduce((acc, curr) => acc + curr.availableLiters, 0) / 1000)}k L</p>
                                 </div>
                             </div>
 
                             {/* Table */}
-                            <div className="bg-black/20 border border-blue-900/30 rounded-sm overflow-hidden">
+                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-sm overflow-hidden">
                                 <table className="w-full text-left">
-                                    <thead className="bg-blue-900/20 text-blue-200">
+                                    <thead className="bg-black/50 text-gray-400 border-b border-gray-800">
                                         <tr>
                                             <th className="p-4 text-[9px] font-black uppercase tracking-widest">Supplier Entity</th>
-                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Region</th>
-                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Terminal Price</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Pricing & Stats</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Liquidity</th>
                                             <th className="p-4 text-[9px] font-black uppercase tracking-widest">Status</th>
                                             <th className="p-4 text-[9px] font-black uppercase tracking-widest text-right">Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-blue-900/10">
+                                    <tbody className="divide-y divide-gray-800/50">
                                         {suppliers.map(supplier => (
-                                            <tr key={supplier.id} className="hover:bg-white/5 transition-colors">
+                                            <tr key={supplier.id} className="hover:bg-white/[0.02] transition-colors">
                                                 <td className="p-4">
-                                                    <p className="text-xs font-black text-white uppercase">{supplier.name}</p>
-                                                    <p className="text-[9px] font-bold text-gray-500 uppercase">{supplier.id}</p>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-sm bg-blue-900/20 border border-blue-500/20 flex items-center justify-center text-blue-500 font-black text-xs">
+                                                            {supplier.rating}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-black text-white uppercase">{supplier.name}</p>
+                                                            <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{supplier.id} • {supplier.city}</p>
+                                                        </div>
+                                                    </div>
                                                 </td>
-                                                <td className="p-4 text-xs font-bold uppercase">{supplier.city}</td>
-                                                <td className="p-4 text-xs font-bold text-white uppercase">{supplier.pricePerLiter} NGN</td>
                                                 <td className="p-4">
-                                                    <span className={`px-2 py-1 rounded-xs text-[8px] font-black uppercase tracking-widest ${supplier.isVerified ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`}>
+                                                    <p className="text-xs font-black text-blue-400 uppercase">{formatCurrency(supplier.pricePerLiter)}<span className="text-[9px] text-gray-500">/L</span></p>
+                                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">D: {supplier.density} • ETA: {supplier.etaMinutes}m</p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="w-full bg-gray-900 rounded-full h-1.5 mb-1 max-w-[100px]">
+                                                        <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (supplier.availableLiters / 100000) * 100)}%` }}></div>
+                                                    </div>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{supplier.availableLiters.toLocaleString()}L</p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-1 rounded-sm text-[9px] font-black uppercase tracking-widest border ${supplier.isVerified ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                                                         {supplier.verificationStatus}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <button
-                                                        onClick={() => toggleStatus(supplier.id)}
-                                                        className="text-[9px] font-black text-blue-400 uppercase tracking-widest hover:text-white border border-blue-900/30 px-3 py-2 rounded-sm hover:bg-blue-900/30 transition-all"
+                                                        onClick={() => toggleSupplierStatus(supplier.id)}
+                                                        className={`text-[9px] font-black uppercase tracking-widest border px-4 py-2 rounded-sm transition-all ${supplier.isVerified
+                                                                ? 'text-red-400 border-red-900/30 hover:bg-red-900/20 hover:border-red-500/50'
+                                                                : 'text-green-400 border-green-900/30 hover:bg-green-900/20 hover:border-green-500/50'
+                                                            }`}
                                                     >
-                                                        {supplier.isVerified ? 'Revoke Access' : 'Authorize Node'}
+                                                        {supplier.isVerified ? 'Revoke' : 'Authorize'}
                                                     </button>
                                                 </td>
                                             </tr>
@@ -137,31 +194,152 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     )}
 
-                    {activeMenu === 'map' && (
-                        <div className="bg-black/40 border border-blue-900/30 rounded-sm h-[600px] flex items-center justify-center relative overflow-hidden group">
-                            {/* Mock Map Background */}
-                            <div className="absolute inset-0 opacity-20">
-                                <div className="grid grid-cols-12 grid-rows-12 w-full h-full">
-                                    {[...Array(144)].map((_, i) => (
-                                        <div key={i} className="border border-blue-500/10"></div>
-                                    ))}
-                                </div>
+                    {activeMenu === 'buyers' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-sm overflow-hidden">
+                                <table className="w-full text-left">
+                                    <thead className="bg-black/50 text-gray-400 border-b border-gray-800">
+                                        <tr>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Corporate Entity</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Credit Facility</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Volume/Score</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Status</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-800/50">
+                                        {buyers.map(buyer => (
+                                            <tr key={buyer.id} className="hover:bg-white/[0.02] transition-colors">
+                                                <td className="p-4">
+                                                    <p className="text-xs font-black text-white uppercase">{buyer.name}</p>
+                                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{buyer.id} • {buyer.city}</p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex justify-between text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 max-w-[150px]">
+                                                        <span>Utilized</span>
+                                                        <span>{Math.round((buyer.utilizedCredit / buyer.creditLimit) * 100)}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-900 rounded-full h-1.5 mb-1 max-w-[150px]">
+                                                        <div className={`h-1.5 rounded-full ${buyer.utilizedCredit / buyer.creditLimit > 0.9 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${(buyer.utilizedCredit / buyer.creditLimit) * 100}%` }}></div>
+                                                    </div>
+                                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{formatCurrency(buyer.utilizedCredit)} / {formatCurrency(buyer.creditLimit)}</p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <p className="text-xs font-black text-gray-300 uppercase">{buyer.volume}</p>
+                                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5 flex items-center gap-1">
+                                                        Score: <span className={buyer.creditScore > 750 ? 'text-green-400' : 'text-yellow-400'}>{buyer.creditScore}</span>
+                                                    </p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-1 rounded-sm text-[9px] font-black uppercase tracking-widest border ${buyer.status === 'Active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                            buyer.status === 'Warning' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+                                                                'bg-red-500/10 text-red-500 border-red-500/20'
+                                                        }`}>
+                                                        {buyer.status}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <button
+                                                        onClick={() => toggleBuyerStatus(buyer.id)}
+                                                        className="text-[9px] font-black text-gray-400 uppercase tracking-widest border border-gray-700 hover:text-white px-4 py-2 rounded-sm hover:bg-gray-800 transition-all"
+                                                    >
+                                                        {buyer.status === 'Active' ? 'Suspend' : 'Activate'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
+                        </div>
+                    )}
 
-                            <div className="text-center">
-                                <MapIcon className="w-12 h-12 text-blue-500 mx-auto mb-4 animate-pulse" />
-                                <h3 className="text-xl font-black text-white uppercase tracking-tighter">Live Satellite Feed</h3>
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">Connecting to Logistics Grid...</p>
+                    {activeMenu === 'dispatch' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-sm overflow-hidden">
+                                <table className="w-full text-left">
+                                    <thead className="bg-black/50 text-gray-400 border-b border-gray-800">
+                                        <tr>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Tracking ID</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Logistics Details</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Financials</th>
+                                            <th className="p-4 text-[9px] font-black uppercase tracking-widest">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-800/50">
+                                        {orders.map(order => (
+                                            <tr key={order.id} className="hover:bg-white/[0.02] transition-colors">
+                                                <td className="p-4">
+                                                    <p className="text-xs font-black text-white uppercase">{order.id}</p>
+                                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(order.timestamp).toLocaleTimeString()}</p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <p className="text-xs font-bold text-gray-300 uppercase">{order.buyerName}</p>
+                                                    <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest mt-0.5">{order.liters.toLocaleString()}L • {order.distanceKm}KM DISTANCE</p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <p className="text-xs font-black text-white uppercase">{formatCurrency(order.totalCost)}</p>
+                                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{order.paymentMethod}</p>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className={`px-2 py-1 rounded-sm text-[9px] font-black uppercase tracking-widest border ${order.status === 'Delivered' || order.status === 'Paid' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                                order.status === 'In Transit' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                                    'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                                            }`}>
+                                                            {order.status}
+                                                        </span>
+                                                        {order.status === 'In Transit' && (
+                                                            <button className="text-[9px] font-black text-blue-400 uppercase tracking-widest hover:underline flex items-center gap-1">
+                                                                <MapIcon className="w-3 h-3" /> Track
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeMenu === 'map' && (
+                        <div className="bg-[#0a0a0a] border border-gray-800 rounded-sm h-[600px] flex items-center justify-center relative overflow-hidden group animate-in fade-in zoom-in-[0.98] duration-500">
+                            {/* Radar Scan Effect */}
+                            <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-500/10"></div>
+                            <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-500/10"></div>
+                            <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-500/20"></div>
+                            <div className="absolute top-1/2 left-1/2 w-[200px] h-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-500/30 bg-blue-500/5"></div>
+
+                            <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] -translate-x-1/2 border-l-2 border-green-500/50 origin-top rounded-tl-full bg-gradient-to-br from-green-500/10 to-transparent animate-[spin_4s_linear_infinite]"></div>
+
+                            {/* Mock Grid Background */}
+                            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
+                            <div className="absolute bottom-8 left-8 bg-black/80 backdrop-blur-md border border-gray-800 p-4 rounded-sm text-center shadow-2xl z-10">
+                                <MapIcon className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                                <h3 className="text-sm font-black text-white uppercase tracking-widest">Grid Active</h3>
+                                <p className="text-[9px] font-bold text-green-400 uppercase tracking-widest mt-1">42 Vehicles Tracked</p>
                             </div>
 
                             {/* Mock Nodes */}
-                            {['top-1/4 left-1/4', 'top-1/2 right-1/4', 'bottom-1/3 left-1/2'].map((pos, i) => (
-                                <div key={i} className={`absolute ${pos}`}>
-                                    <div className="relative">
-                                        <div className="w-2 h-2 bg-yellow-400 rounded-full animate-ping absolute top-0 left-0"></div>
-                                        <div className="w-2 h-2 bg-yellow-400 rounded-full relative z-10"></div>
-                                        <div className="absolute top-4 left-4 bg-black/80 text-yellow-500 text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-sm whitespace-nowrap border border-yellow-500/20">
-                                            Truck #{200 + i} Active
+                            {[
+                                { pos: 'top-1/4 left-1/4', id: 'TRK-204', status: 'In Transit', deg: 45 },
+                                { pos: 'top-1/3 right-1/4', id: 'TRK-109', status: 'Idle', deg: 120 },
+                                { pos: 'bottom-1/3 left-1/2', id: 'TRK-332', status: 'Loading', deg: 210 },
+                                { pos: 'top-1/2 left-1/3', id: 'TRK-881', status: 'In Transit', deg: 330 },
+                            ].map((node, i) => (
+                                <div key={i} className={`absolute ${node.pos} z-10`}>
+                                    <div className="relative group cursor-pointer">
+                                        <div className={`w-3 h-3 rounded-full relative z-10 border-2 border-[#0a0a0a] ${node.status === 'In Transit' ? 'bg-green-500' : node.status === 'Loading' ? 'bg-yellow-500' : 'bg-gray-500'}`}></div>
+                                        {node.status === 'In Transit' && <div className="absolute top-0 left-0 w-3 h-3 bg-green-500 rounded-full animate-ping"></div>}
+
+                                        {/* Tooltip */}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#0a0a0a] border border-gray-800 p-3 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity w-48 shadow-2xl pointer-events-none">
+                                            <p className="text-[10px] font-black text-white uppercase tracking-widest border-b border-gray-800 pb-2 mb-2">{node.id}</p>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex justify-between">Status <span className={node.status === 'In Transit' ? 'text-green-400' : 'text-yellow-400'}>{node.status}</span></p>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1 flex justify-between">Heading <span>{node.deg}°</span></p>
                                         </div>
                                     </div>
                                 </div>
@@ -169,10 +347,74 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     )}
 
-                    {(activeMenu !== 'suppliers' && activeMenu !== 'map') && (
-                        <div className="flex flex-col items-center justify-center h-[400px] border border-dashed border-gray-700 rounded-sm">
-                            <Settings className="w-10 h-10 text-gray-700 mb-4" />
-                            <p className="text-xs font-black text-gray-500 uppercase tracking-widest">Module Under Maintenance</p>
+                    {activeMenu === 'system' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="grid grid-cols-2 gap-6">
+                                {/* Settings */}
+                                <div className="bg-[#0a0a0a] border border-gray-800 p-6 rounded-sm">
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-gray-800 pb-4">
+                                        <Settings className="w-4 h-4 text-blue-500" /> Platform Configuration
+                                    </h3>
+                                    <div className="space-y-5">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs font-black text-white uppercase">Platform Trading Fee</p>
+                                                <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Base commission per transaction</p>
+                                            </div>
+                                            <span className="bg-blue-900/20 border border-blue-500/20 text-blue-400 px-3 py-1 rounded-sm text-xs font-black">2.0%</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs font-black text-white uppercase">Credit Surcharge</p>
+                                                <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">14-Day Facility Fee</p>
+                                            </div>
+                                            <span className="bg-blue-900/20 border border-blue-500/20 text-blue-400 px-3 py-1 rounded-sm text-xs font-black">2.0%</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-4 border-t border-gray-800">
+                                            <div>
+                                                <p className="text-xs font-black text-white uppercase">New Supplier Auto-Approve</p>
+                                                <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Bypass manual audit</p>
+                                            </div>
+                                            <div className="w-10 h-5 bg-gray-800 rounded-full relative cursor-pointer border border-gray-700">
+                                                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-gray-500 rounded-full"></div>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs font-black text-white uppercase">API Maintenance Mode</p>
+                                                <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Halt all trade executions</p>
+                                            </div>
+                                            <div className="w-10 h-5 bg-gray-800 rounded-full relative cursor-pointer border border-gray-700">
+                                                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-gray-500 rounded-full"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Logs */}
+                                <div className="bg-[#0a0a0a] border border-gray-800 p-6 rounded-sm">
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-gray-800 pb-4">
+                                        <Terminal className="w-4 h-4 text-green-500" /> System Logs
+                                    </h3>
+                                    <div className="space-y-4 font-mono text-[10px]">
+                                        {SYSTEM_LOGS.map(log => (
+                                            <div key={log.id} className="flex gap-4 p-2 hover:bg-white/5 rounded-sm transition-colors border-l-2 border-transparent hover:border-blue-500">
+                                                <span className="text-gray-500 whitespace-nowrap">[{log.time}]</span>
+                                                <span className={`w-16 whitespace-nowrap uppercase font-bold tracking-widest ${log.status === 'success' ? 'text-green-500' :
+                                                        log.status === 'error' ? 'text-red-500' :
+                                                            log.status === 'warning' ? 'text-yellow-500' : 'text-blue-500'
+                                                    }`}>
+                                                    {log.type}
+                                                </span>
+                                                <span className="text-gray-300">{log.message}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button className="w-full mt-6 py-3 border border-gray-800 text-[9px] font-black text-gray-500 uppercase tracking-widest hover:bg-white/5 hover:text-white transition-colors rounded-sm">
+                                        Export Log Archive
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

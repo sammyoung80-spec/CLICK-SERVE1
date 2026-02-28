@@ -42,9 +42,20 @@ export const MOCK_ORDERS: Order[] = [
 ];
 
 export const MOCK_BUYERS = [
-    { id: 'BUY-001', name: 'Julius Berger PLC', city: 'Abuja', volume: 'High', creditScore: 850 },
-    { id: 'BUY-002', name: 'Eko Hotels & Suites', city: 'Lagos', volume: 'Medium', creditScore: 780 },
-    { id: 'BUY-003', name: 'Kano Textiles', city: 'Kano', volume: 'Medium', creditScore: 650 },
+    { id: 'BUY-001', name: 'Julius Berger PLC', city: 'Abuja', volume: 'High', creditScore: 850, creditLimit: 50000000, utilizedCredit: 12500000, status: 'Active' },
+    { id: 'BUY-002', name: 'Eko Hotels & Suites', city: 'Lagos', volume: 'Medium', creditScore: 780, creditLimit: 25000000, utilizedCredit: 8200000, status: 'Active' },
+    { id: 'BUY-003', name: 'Kano Textiles', city: 'Kano', volume: 'Medium', creditScore: 650, creditLimit: 10000000, utilizedCredit: 9500000, status: 'Warning' },
+    { id: 'BUY-004', name: 'Oando Terminals', city: 'Port Harcourt', volume: 'High', creditScore: 920, creditLimit: 100000000, utilizedCredit: 45000000, status: 'Active' },
+    { id: 'BUY-005', name: 'Lekki Free Zone', city: 'Lagos', volume: 'Low', creditScore: 540, creditLimit: 5000000, utilizedCredit: 4800000, status: 'Suspended' },
+];
+
+export const SYSTEM_LOGS = [
+    { id: 'LOG-01', time: '10:42 AM', type: 'AUTH', message: 'Admin login successful from IP 192.168.1.45', status: 'success' },
+    { id: 'LOG-02', time: '10:38 AM', type: 'ORDER', message: 'Order ORD-7721 dispatched to Julius Berger', status: 'info' },
+    { id: 'LOG-03', time: '10:15 AM', type: 'SYSTEM', message: 'Database backup completed successfully', status: 'success' },
+    { id: 'LOG-04', time: '09:55 AM', type: 'SECURITY', message: 'Failed login attempt for BUY-003', status: 'warning' },
+    { id: 'LOG-05', time: '09:30 AM', type: 'FINANCE', message: 'Credit limit warning trigger for Kano Textiles (95% utilized)', status: 'warning' },
+    { id: 'LOG-06', time: '08:12 AM', type: 'API', message: 'Interswitch Gateway latency spike detected (>2000ms)', status: 'error' },
 ];
 
 export const NIGERIAN_BANKS: NigerianBank[] = [

@@ -10,12 +10,13 @@ interface AdminGateProps {
 }
 
 const AdminGate: React.FC<AdminGateProps> = ({ onUnlock, onClose }) => {
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === "Didsown'sit26$") {
+        if (username === 'admin' && password === "Didsown'sit26$") {
             onUnlock();
         } else {
             setError(true);
@@ -46,9 +47,16 @@ const AdminGate: React.FC<AdminGateProps> = ({ onUnlock, onClose }) => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="relative">
+                    <div className="relative space-y-4">
                         <input
                             autoFocus
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="w-full bg-black/50 border border-blue-800 text-white p-4 text-center tracking-widest font-black focus:outline-none focus:border-red-500 transition-colors uppercase placeholder:tracking-normal placeholder:text-xs placeholder:font-bold"
+                            placeholder="Admin ID (e.g. admin)"
+                        />
+                        <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -61,7 +69,7 @@ const AdminGate: React.FC<AdminGateProps> = ({ onUnlock, onClose }) => {
                                 animate={{ x: [0, -10, 10, -10, 10, 0] }}
                                 className="absolute -bottom-6 left-0 w-full text-center text-[9px] font-black text-red-500 uppercase tracking-widest mt-2"
                             >
-                                Access Denied: Invalid Key
+                                Access Denied: Invalid Credentials
                             </motion.div>
                         )}
                     </div>
