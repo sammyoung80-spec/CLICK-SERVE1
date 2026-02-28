@@ -115,7 +115,7 @@ const BuyerDashboard: React.FC<BuyerDashboardProps> = ({ city = 'Lagos', initial
                 distance_km: distance,
                 total_cost: currentPricing.total,
                 status: 'Pending',
-                payment_method: expandedPayment === 'credit' ? 'Credit' : 'Pay Now',
+                payment_method: isCredit ? 'Credit' : 'Pay Now',
                 priority: 'Normal'
             };
 
