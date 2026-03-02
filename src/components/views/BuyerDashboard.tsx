@@ -80,7 +80,15 @@ const BuyerDashboard: React.FC<BuyerDashboardProps> = ({ city = 'Lagos', initial
 
                 if (error) throw error;
                 if (data) {
-                    setSuppliers(data as Supplier[]);
+                    const formattedSuppliers = data.map(s => ({
+                        ...s,
+                        pricePerLiter: s.price_per_liter,
+                        availableLiters: s.available_liters,
+                        verificationStatus: s.verification_status,
+                        etaMinutes: s.eta_minutes,
+                        isVerified: s.is_verified
+                    })) as Supplier[];
+                    setSuppliers(formattedSuppliers);
                 }
             } catch (error) {
                 console.error('Error fetching suppliers:', error);
@@ -216,17 +224,17 @@ const BuyerDashboard: React.FC<BuyerDashboardProps> = ({ city = 'Lagos', initial
                                             <div>
                                                 <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
                                                     {supplier.name}
-                                                    {supplier.is_verified && <ShieldCheck className="w-4 h-4 text-green-500" />}
+                                                    {supplier.isVerified && <ShieldCheck className="w-4 h-4 text-green-500" />}
                                                 </h3>
                                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
-                                                    ETA: <span className="text-gray-300">{supplier.eta_minutes || supplier.etaMinutes} MINS</span> • DENSITY: <span className="text-gray-300">{supplier.density}</span>
+                                                    ETA: <span className="text-gray-300">{supplier.etaMinutes} MINS</span> • DENSITY: <span className="text-gray-300">{supplier.density}</span>
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-xl font-black text-blue-400">{formatCurrency(supplier.price_per_liter || supplier.pricePerLiter)}</p>
+                                            <p className="text-xl font-black text-blue-400">{formatCurrency(supplier.pricePerLiter)}</p>
                                             <p className="text-[9px] font-bold text-yellow-500 uppercase tracking-widest mt-1 flex items-center justify-end gap-1">
-                                                <Zap className="w-3 h-3" /> {(supplier.available_liters || supplier.availableLiters).toLocaleString()}L Available
+                                                <Zap className="w-3 h-3" /> {supplier.availableLiters.toLocaleString()}L Available
                                             </p>
                                         </div>
                                     </div>
