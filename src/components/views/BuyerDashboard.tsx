@@ -49,7 +49,7 @@ const BuyerDashboard: React.FC<BuyerDashboardProps> = ({ city = 'Lagos', initial
     const [paymentStep, setPaymentStep] = useState<'summary' | 'processing' | 'success'>('summary');
 
     // Payment State
-    const [expandedPayment, setExpandedPayment] = useState<'transfer' | 'card' | null>(null);
+    const [expandedPayment, setExpandedPayment] = useState<'transfer' | 'card' | 'credit' | null>(null);
     const [selectedBank, setSelectedBank] = useState<string | null>(null);
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
