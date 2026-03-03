@@ -55,7 +55,13 @@ const SupplierDashboard: React.FC = () => {
                         .order('created_at', { ascending: false });
 
                     if (!ordersError && ordersData) {
-                        setOrders(ordersData as Order[]);
+                        const formattedOrders = ordersData.map(o => ({
+                            ...o,
+                            totalCost: o.total_cost,
+                            distanceKm: o.distance_km,
+                            buyerName: o.buyer_name // Just in case it's in the DB
+                        })) as Order[];
+                        setOrders(formattedOrders);
                     }
                 }
             } catch (error) {
@@ -72,7 +78,7 @@ const SupplierDashboard: React.FC = () => {
     const activeOrders = useMemo(() => orders.filter(o => o.status === 'In Transit' || o.status === 'Pending'), [orders]);
 
     // Calculate liquidity for modal
-    const liquidityCalc = selectedInvoice ? calculateInvoiceDiscounting(selectedInvoice.total_cost || selectedInvoice.totalCost) : null;
+    const liquidityCalc = selectedInvoice ? calculateInvoiceDiscounting(selectedInvoice.totalCost) : null;
 
     const executeLiquidation = async () => {
         if (!selectedInvoice) return;
