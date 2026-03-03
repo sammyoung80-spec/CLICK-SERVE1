@@ -24,7 +24,15 @@ const SuppliersList: React.FC<SuppliersListProps> = ({ onLoginClick }) => {
 
                 if (error) throw error;
                 if (data) {
-                    setSuppliers(data as Supplier[]);
+                    const formatted = data.map(s => ({
+                        ...s,
+                        pricePerLiter: s.price_per_liter,
+                        availableLiters: s.available_liters,
+                        verificationStatus: s.verification_status,
+                        etaMinutes: s.eta_minutes,
+                        isVerified: s.is_verified
+                    })) as Supplier[];
+                    setSuppliers(formatted);
                 }
             } catch (error) {
                 console.error('Error fetching suppliers:', error);
@@ -89,7 +97,7 @@ const SuppliersList: React.FC<SuppliersListProps> = ({ onLoginClick }) => {
                                     <div>
                                         <h3 className="text-lg font-black text-blue-900 uppercase tracking-tight flex items-center gap-2">
                                             {supplier.name}
-                                            {supplier.is_verified && <ShieldCheck className="w-4 h-4 text-blue-500" />}
+                                            {supplier.isVerified && <ShieldCheck className="w-4 h-4 text-blue-500" />}
                                         </h3>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{supplier.city} Terminal</p>
                                     </div>
@@ -99,7 +107,7 @@ const SuppliersList: React.FC<SuppliersListProps> = ({ onLoginClick }) => {
                                 </div>
 
                                 <div className="mb-6">
-                                    <p className="text-3xl font-black text-blue-900">{formatCurrency(supplier.price_per_liter || supplier.pricePerLiter)}<span className="text-sm font-bold text-gray-400">/L</span></p>
+                                    <p className="text-3xl font-black text-blue-900">{formatCurrency(supplier.pricePerLiter)}<span className="text-sm font-bold text-gray-400">/L</span></p>
                                     <p className="text-[9px] font-bold text-green-600 uppercase tracking-widest mt-1">Available to load immediately</p>
                                 </div>
 
@@ -110,7 +118,7 @@ const SuppliersList: React.FC<SuppliersListProps> = ({ onLoginClick }) => {
                                     </div>
                                     <div>
                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Est. Load Time</p>
-                                        <p className="text-sm font-black text-blue-900">{supplier.eta_minutes || supplier.etaMinutes} Mins</p>
+                                        <p className="text-sm font-black text-blue-900">{supplier.etaMinutes} Mins</p>
                                     </div>
                                 </div>
 
