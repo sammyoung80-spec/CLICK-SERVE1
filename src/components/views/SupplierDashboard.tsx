@@ -138,7 +138,7 @@ const SupplierDashboard: React.FC = () => {
                                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Gate Price</p>
                                 <div className="flex items-center gap-3 bg-black/50 px-3 py-1 rounded-sm border border-gray-800">
                                     <button onClick={() => setTerminalPrice(p => p - 5)} className="text-blue-500/50 hover:text-blue-400 text-xl font-bold transition-colors">-</button>
-                                    <p className="text-2xl font-black text-white w-24 text-center">{formatCurrency(supplierData?.price_per_liter || supplierData?.pricePerLiter || terminalPrice)}</p>
+                                    <p className="text-2xl font-black text-white w-24 text-center">{formatCurrency(supplierData?.pricePerLiter || terminalPrice)}</p>
                                     <button onClick={() => setTerminalPrice(p => p + 5)} className="text-blue-500/50 hover:text-blue-400 text-xl font-bold transition-colors">+</button>
                                 </div>
                             </div>
@@ -181,9 +181,9 @@ const SupplierDashboard: React.FC = () => {
                                         <div className="flex justify-between items-end">
                                             <div className="text-[10px] text-gray-500 font-bold uppercase flex gap-3">
                                                 <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-blue-500" /> {order.liters.toLocaleString()} L</span>
-                                                <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-blue-500" /> {order.distance_km || order.distanceKm || 0} KM</span>
+                                                <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-blue-500" /> {order.distanceKm || 0} KM</span>
                                             </div>
-                                            <p className="text-sm font-black text-blue-400">{formatCurrency(order.total_cost || order.totalCost)}</p>
+                                            <p className="text-sm font-black text-blue-400">{formatCurrency(order.totalCost)}</p>
                                         </div>
                                         <div className="mt-4 flex gap-3">
                                             <button className="flex-1 bg-transparent border border-gray-700 text-[9px] font-black text-gray-400 py-2.5 uppercase tracking-widest hover:border-gray-500 hover:text-white transition-colors rounded-sm">View Node</button>
@@ -229,7 +229,7 @@ const SupplierDashboard: React.FC = () => {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[10px] font-black text-gray-600 line-through decoration-red-500/50 decoration-2 uppercase tracking-widest mb-1">Net 14 Days</p>
-                                            <p className="text-lg font-black text-white">{formatCurrency(invoice.total_cost || invoice.totalCost)}</p>
+                                            <p className="text-lg font-black text-white">{formatCurrency(invoice.totalCost)}</p>
                                         </div>
                                     </div>
 
