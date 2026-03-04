@@ -13,6 +13,7 @@ export interface UserSession {
   name: string;
   businessName?: string;
   city?: City;
+  isApproved: boolean;
 }
 
 export interface CityData {

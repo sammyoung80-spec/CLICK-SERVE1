@@ -12,6 +12,7 @@ const AdminDashboard: React.FC = () => {
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [buyers, setBuyers] = useState<any[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
+    const [approvals, setApprovals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -83,6 +84,21 @@ const AdminDashboard: React.FC = () => {
 
                 setOrders(formattedOrders as Order[]);
 
+                // 4. Fetch Approvals (Any profile not yet marked as approved)
+                const { data: profilesData, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('*');
+
+                if (!profilesError && profilesData) {
+                    // Filter for buyers/suppliers who are not yet approved
+                    // We handle missing column gracefully by checking if key exists
+                    const pending = profilesData.filter(p =>
+                        (p.role === 'buyer' || p.role === 'supplier') &&
+                        (p.is_approved === false)
+                    );
+                    setApprovals(pending);
+                }
+
             } catch (error) {
                 console.error('Error fetching admin data:', error);
             } finally {
@@ -125,6 +141,7 @@ const AdminDashboard: React.FC = () => {
     const menuItems = [
         { id: 'suppliers', label: 'Suppliers', icon: <Truck className="w-4 h-4" /> },
         { id: 'buyers', label: 'Buyers', icon: <Users className="w-4 h-4" /> },
+        { id: 'approvals', label: 'Approvals', icon: <ShieldCheck className="w-4 h-4" /> },
         { id: 'dispatch', label: 'Dispatch', icon: <FileText className="w-4 h-4" /> },
         { id: 'map', label: 'Live Map', icon: <MapIcon className="w-4 h-4" /> },
         { id: 'system', label: 'System', icon: <Settings className="w-4 h-4" /> },
@@ -148,13 +165,18 @@ const AdminDashboard: React.FC = () => {
                         <button
                             key={item.id}
                             onClick={() => setActiveMenu(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all ${activeMenu === item.id
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all ${activeMenu === item.id
                                 ? 'bg-blue-900/20 text-blue-400 border-l-2 border-blue-500 shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]'
                                 : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'
                                 }`}
                         >
-                            {item.icon}
-                            {item.label}
+                            <div className="flex items-center gap-3">
+                                {item.icon}
+                                {item.label}
+                            </div>
+                            {item.id === 'approvals' && approvals.length > 0 && (
+                                <span className="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full animate-pulse">{approvals.length}</span>
+                            )}
                         </button>
                     ))}
                 </nav>
@@ -350,6 +372,72 @@ const AdminDashboard: React.FC = () => {
                                                 ))}
                                             </tbody>
                                         </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeMenu === 'approvals' && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-gray-300">
+                                    <div className="bg-[#0a0a0a] border border-gray-800 rounded-sm overflow-hidden p-6 text-center">
+                                        <h2 className="text-sm font-black text-white uppercase tracking-widest mb-4">Pending Corporate Verifications</h2>
+                                        {approvals.length === 0 ? (
+                                            <div className="py-20 opacity-50 flex flex-col items-center">
+                                                <CheckCircle2 className="w-16 h-16 mb-4" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest">System Clear: No Pending Audits</p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid gap-4">
+                                                {approvals.map(pending => (
+                                                    <div key={pending.id} className="bg-black/40 border border-gray-800 p-6 flex flex-col md:flex-row justify-between items-center gap-6 group hover:border-blue-500/30 transition-all">
+                                                        <div className="text-left flex-1">
+                                                            <div className="flex items-center gap-3 mb-2">
+                                                                <div className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter border ${pending.role === 'supplier' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                                                    {pending.role}
+                                                                </div>
+                                                                <p className="text-xs font-black text-white uppercase tracking-tight">{pending.business_name || pending.full_name}</p>
+                                                            </div>
+                                                            <div className="flex gap-6 text-[9px] font-bold text-gray-500 uppercase tracking-widest">
+                                                                <span>Entity: {pending.email}</span>
+                                                                <span>Region: {pending.city || 'Lagos'}</span>
+                                                                <span>TIN: {pending.tin || 'N/A'}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-4">
+                                                            <button className="px-6 py-2 border border-gray-800 text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-red-400 hover:border-red-900/30 transition-all">Decline Access</button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        const { error } = await supabase
+                                                                            .from('profiles')
+                                                                            .update({ is_approved: true })
+                                                                            .eq('id', pending.id);
+
+                                                                        if (error) throw error;
+
+                                                                        // If it's a supplier, ensure verification_status is 'Verified'
+                                                                        if (pending.role === 'supplier') {
+                                                                            await supabase
+                                                                                .from('suppliers')
+                                                                                .update({ is_verified: true, verification_status: 'Verified' })
+                                                                                .eq('profile_id', pending.id);
+                                                                        }
+
+                                                                        setApprovals(prev => prev.filter(p => p.id !== pending.id));
+                                                                        alert('Entity Verified Successfully.');
+                                                                    } catch (err) {
+                                                                        console.error(err);
+                                                                        alert('Approval Failed.');
+                                                                    }
+                                                                }}
+                                                                className="px-6 py-2 bg-blue-900 border border-blue-500/30 text-[9px] font-black uppercase tracking-widest text-white hover:bg-blue-800 transition-all shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                                                            >
+                                                                Authorize Profile
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

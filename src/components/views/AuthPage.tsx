@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Truck, Droplets } from 'lucide-react';
+import { Truck, Droplets, CheckCircle2, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AuthPageProps {
@@ -17,6 +17,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess, onCancel }) => {
     const [role, setRole] = useState<'buyer' | 'supplier' | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [signupSuccess, setSignupSuccess] = useState(false);
 
     const [formData, setFormData] = useState({
         email: '',
@@ -44,13 +45,59 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess, onCancel }) => {
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!role) { setError('Select a role'); return; }
-
+        setError('');
         setLoading(true);
-        // Simulate flow
-        setTimeout(() => {
-            alert("Registration Successful. Corporate Audit Initiated.");
-            onSuccess();
-        }, 1500);
+
+        try {
+            // 1. Create auth user with metadata
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    data: {
+                        full_name: formData.businessName,
+                        role: role,
+                        business_name: formData.businessName,
+                        phone: formData.phone,
+                        nin: formData.nin,
+                        tin: formData.tin,
+                        reg_number: formData.regNumber,
+                    }
+                }
+            });
+
+            if (authError) throw authError;
+
+            // 2. If supplier, also create a suppliers row
+            if (role === 'supplier' && authData.user) {
+                const { error: supplierError } = await supabase
+                    .from('suppliers')
+                    .insert({
+                        profile_id: authData.user.id,
+                        name: formData.businessName,
+                        city: 'Lagos',
+                        price_per_liter: 0,
+                        density: 0.845,
+                        eta_minutes: 45,
+                        rating: 5.0,
+                        available_liters: 0,
+                        is_verified: false,
+                        verification_status: 'Pending'
+                    });
+
+                if (supplierError) {
+                    console.error('Supplier row creation error:', supplierError);
+                }
+            }
+
+            // 3. Show success state
+            setSignupSuccess(true);
+
+        } catch (err: any) {
+            setError(err.message || 'Registration failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -138,7 +185,26 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess, onCancel }) => {
 
                     {/* Form Area */}
                     <div className="col-span-3 p-8 md:p-12">
-                        {!role ? (
+                        {signupSuccess ? (
+                            /* Signup Success - Pending Approval */
+                            <div className="h-full flex flex-col justify-center items-center text-center py-12">
+                                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6 border-2 border-green-200">
+                                    <CheckCircle2 className="w-10 h-10 text-green-500" />
+                                </div>
+                                <h3 className="text-2xl font-black text-blue-900 uppercase tracking-tight mb-3">Registration Submitted</h3>
+                                <p className="text-sm text-gray-500 font-bold mb-6 max-w-sm leading-relaxed">
+                                    Your application is now pending admin approval. You will be notified once your account has been verified.
+                                </p>
+                                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-sm mb-8 max-w-sm">
+                                    <p className="text-[9px] font-black text-yellow-700 uppercase tracking-widest flex items-center justify-center gap-2">
+                                        <Shield className="w-3 h-3" /> Corporate Audit In Progress
+                                    </p>
+                                </div>
+                                <button onClick={onSuccess} className="bg-blue-900 text-white px-8 py-3 font-black uppercase tracking-widest text-xs rounded-sm hover:bg-black transition-colors">
+                                    Go to Login
+                                </button>
+                            </div>
+                        ) : !role ? (
                             <div className="h-full flex flex-col justify-center text-center">
                                 <h3 className="text-2xl font-black text-blue-900 uppercase tracking-tight mb-8">Select Entity Type</h3>
                                 <div className="grid gap-6">
@@ -160,30 +226,36 @@ const AuthPage: React.FC<AuthPageProps> = ({ onSuccess, onCancel }) => {
                                     <button type="button" onClick={() => setRole(null)} className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-blue-900">Change</button>
                                 </div>
 
+                                {error && (
+                                    <div className="bg-red-50 text-red-600 p-3 text-[10px] font-bold uppercase tracking-wide border border-red-100 text-center rounded-sm">
+                                        {error}
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="col-span-2">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Corporate Email</label>
-                                        <input required type="email" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="admin@company.ng" />
+                                        <input required type="email" value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="admin@company.ng" />
                                     </div>
                                     <div className="col-span-2">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Registered Business Name</label>
-                                        <input required type="text" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="RC Entity Name" />
+                                        <input required type="text" value={formData.businessName} onChange={(e) => setFormData(p => ({ ...p, businessName: e.target.value }))} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="RC Entity Name" />
                                     </div>
                                     <div>
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">RC Number</label>
-                                        <input required type="text" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="RC-000000" />
+                                        <input required type="text" value={formData.regNumber} onChange={(e) => setFormData(p => ({ ...p, regNumber: e.target.value }))} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="RC-000000" />
                                     </div>
                                     <div>
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Tax ID (TIN)</label>
-                                        <input required type="text" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="TIN-0000" />
+                                        <input required type="text" value={formData.tin} onChange={(e) => setFormData(p => ({ ...p, tin: e.target.value }))} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="TIN-0000" />
                                     </div>
                                     <div className="col-span-2">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Directors NIN</label>
-                                        <input required type="text" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="11-Digit NIN" />
+                                        <input required type="text" value={formData.nin} onChange={(e) => setFormData(p => ({ ...p, nin: e.target.value }))} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="11-Digit NIN" />
                                     </div>
                                     <div className="col-span-2">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Password</label>
-                                        <input required type="password" className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="Min 8 characters" />
+                                        <input required type="password" value={formData.password} onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-sm font-bold text-xs text-blue-900 focus:border-blue-900 outline-none" placeholder="Min 8 characters" />
                                     </div>
                                 </div>
 

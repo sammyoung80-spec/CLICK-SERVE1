@@ -10,6 +10,10 @@ create table public.profiles (
   business_name text,
   city text,
   phone text,
+  nin text,
+  tin text,
+  reg_number text,
+  is_approved boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -98,8 +102,19 @@ create policy "Buyers can create orders"
 create or replace function public.handle_new_user() 
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, full_name, role)
-  values (new.id, new.email, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'role');
+  insert into public.profiles (id, email, full_name, role, business_name, phone, nin, tin, reg_number, is_approved)
+  values (
+    new.id, 
+    new.email, 
+    new.raw_user_meta_data->>'full_name', 
+    new.raw_user_meta_data->>'role',
+    new.raw_user_meta_data->>'business_name',
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'nin',
+    new.raw_user_meta_data->>'tin',
+    new.raw_user_meta_data->>'reg_number',
+    false
+  );
   return new;
 end;
 $$ language plpgsql security definer;

@@ -5,6 +5,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import { AppView, UserSession, City } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { Shield, Clock, LogOut } from 'lucide-react';
 
 // Eagerly loaded (above the fold)
 import LandingPage from './views/LandingPage';
@@ -46,14 +47,26 @@ const ClientBody: React.FC = () => {
                 const { data: { session: supabaseSession } } = await supabase.auth.getSession();
                 if (mounted && supabaseSession?.user) {
                     const role = supabaseSession.user.user_metadata.role || 'buyer';
+
+                    // Fetch profile to check approval status
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('is_approved')
+                        .eq('id', supabaseSession.user.id)
+                        .single();
+
                     setSession({
                         id: supabaseSession.user.id,
                         email: supabaseSession.user.email || '',
                         role: role as any,
                         name: supabaseSession.user.user_metadata.business_name || 'User',
-                        city: 'Lagos'
+                        city: 'Lagos',
+                        isApproved: profile?.is_approved ?? false
                     });
-                    setCurrentView(role === 'supplier' ? 'supplier' : role === 'buyer' ? 'buyer' : 'landing');
+
+                    if (profile?.is_approved) {
+                        setCurrentView(role === 'supplier' ? 'supplier' : role === 'buyer' ? 'buyer' : 'landing');
+                    }
                 }
             } catch (error: any) {
                 // Silently handle abort errors or log others
@@ -65,16 +78,25 @@ const ClientBody: React.FC = () => {
 
         initAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, supabaseSession) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, supabaseSession) => {
             if (mounted) {
                 if (supabaseSession?.user) {
                     const role = supabaseSession.user.user_metadata.role || 'buyer';
+
+                    // Fetch profile to check approval status
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('is_approved')
+                        .eq('id', supabaseSession.user.id)
+                        .single();
+
                     setSession({
                         id: supabaseSession.user.id,
                         email: supabaseSession.user.email || '',
                         role: role as any,
                         name: supabaseSession.user.user_metadata.business_name || 'User',
-                        city: 'Lagos'
+                        city: 'Lagos',
+                        isApproved: profile?.is_approved ?? false
                     });
                 } else {
                     setSession(null);
@@ -126,7 +148,8 @@ const ClientBody: React.FC = () => {
             email: role === 'buyer' ? 'buyadmin@clickserve.ng' : 'supadmin@clickserve.ng',
             role: role as any,
             name: role === 'buyer' ? 'Julius Berger PLC' : 'Oando Terminal A',
-            city: 'Lagos'
+            city: 'Lagos',
+            isApproved: true
         };
         setSession(mockSession);
         setCurrentView(role as any);
@@ -168,6 +191,31 @@ const ClientBody: React.FC = () => {
                             onSuccess={() => handleSetView('login')}
                             onCancel={() => handleSetView('landing')}
                         />
+                    )}
+
+                    {/* Approval Gate View */}
+                    {session && !session.isApproved && !session.role?.startsWith('admin') && (
+                        <div className="fixed inset-0 bg-[#050505] z-[150] flex items-center justify-center p-4">
+                            <div className="max-w-md w-full bg-[#0a0a0a] border border-gray-800 p-10 rounded-sm text-center shadow-2xl relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500"></div>
+                                <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-yellow-500/20">
+                                    <Shield className="w-10 h-10 text-yellow-500" />
+                                </div>
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Verification Pending</h2>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed mb-8">
+                                    Your corporate profile is currently under audit by our compliance team. ACCESS to the trading terminal is RESTRICTED until verification is complete.
+                                </p>
+                                <div className="flex items-center justify-center gap-2 mb-10 text-[10px] font-black text-yellow-500 uppercase tracking-widest bg-yellow-500/5 py-3 border border-yellow-500/10">
+                                    <Clock className="w-4 h-4" /> Estimated Time: 2-4 Hours
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full py-4 bg-white/5 border border-gray-800 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
+                                >
+                                    <LogOut className="w-4 h-4" /> Exit Terminal
+                                </button>
+                            </div>
+                        </div>
                     )}
 
                     {currentView === 'buyer' && <BuyerDashboard city={selectedCity} />}
